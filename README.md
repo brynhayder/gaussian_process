@@ -1,1 +1,2 @@
-# gaussian_processes
+# Gaussian Processes
+<hr/>
