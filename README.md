@@ -1,2 +1,1 @@
 # Gaussian Processes
-<hr/>
