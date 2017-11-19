@@ -7,16 +7,21 @@ Hopefully pretty obvious to see how everything works.
 """
 import numpy as np
 
+from plotting import GPRPlotter
+
 __author__ = 'brynhayder'
-__all__ = ['GaussianProcess']
+__all__ = ['GaussianProcessRegressor']
 
-# TODO: Finish Plotter class
+# TODO: Make LML function
+# TODO: Basic parameter optimisation
 # TODO: Write tests and examples
-# TODO: implement for more than 1-d Regression (?)
-# TODO: Deal with non-zero prior mean (?)
 
 
-class GaussianProcess(object):
+def _zero_prior_mean(x):
+    return np.zeros(x.shape[0])
+
+
+class GaussianProcessRegressor(object):
     """ Basic implementation of Gaussian Process for 1-d Regression """
     def __init__(self, kernel, random_state=None):
         """
@@ -33,12 +38,13 @@ class GaussianProcess(object):
         Notes:
             - You need to do .fit before you can take any posterior samples or make any predictions.
         """
+        self.prior_mean = _zero_prior_mean
         self.kernel = kernel
         self.random_state = random_state if random_state is not None else np.random.RandomState(seed=0)
         # set by .fit
         self._is_fit = False
-        self._train_x = None
-        self._train_y = None
+        self.train_x = None
+        self.train_y = None
         self._k = None
         self._k_inv = None
         self._noise_level = None
@@ -59,8 +65,7 @@ class GaussianProcess(object):
     @property
     def plot(self):
         """ Expose simple plotting API """
-        raise NotImplementedError('Plotter not yet implemented')
-        # return GPRPlotter(process=self)
+        return GPRPlotter(process=self)
 
     def sample_prior(self, x, size=1, return_std=False):
         """
@@ -81,7 +86,7 @@ class GaussianProcess(object):
         # in this toy example.
         x = np.atleast_2d(x)
         cov = self.kernel(x, x)
-        samples = self._sample(mean=np.zeros(x.shape[0]),
+        samples = self._sample(mean=self.prior_mean(x),
                                cov=cov,
                                size=size)
         return (samples, np.sqrt(np.diag(cov))) if return_std else samples
@@ -102,10 +107,10 @@ class GaussianProcess(object):
         """
         x, y = np.atleast_2d(x, y)
 
-        self._train_x = x
-        self._train_y = y
+        self.train_x = x
+        self.train_y = y
         self._noise_level = noise_level
-        k = self.kernel(self._train_x, self._train_x)
+        k = self.kernel(self.train_x, self.train_x)
         self._k = k + noise_level ** 2 * np.eye(k.shape[0])
         # noinspection PyTypeChecker
         self._k_inv = np.linalg.inv(self._k)
@@ -130,13 +135,13 @@ class GaussianProcess(object):
         if not self._is_fit:
             raise ValueError('Need to fit the process to some training data first!')
         x = np.atleast_2d(x)
-        k_star = self.kernel(x, self._train_x)
+        k_star = self.kernel(x, self.train_x)
         k_star_star = self.kernel(x, x)
-        posterior_mean = np.dot(np.dot(k_star, self._k_inv), self._train_y)
+        posterior_mean = np.dot(np.dot(k_star, self._k_inv), self.train_y)
         posterior_cov = k_star_star - np.dot(k_star, np.dot(self._k_inv, k_star.T))
         return posterior_mean, posterior_cov
 
-    def sample_posterior(self, x, size=1, reg=1e-12):
+    def sample_posterior(self, x, size=1, return_std=False, reg=1e-12):
         """
         Draw samples from posterior process evaluated at `x`.
         (Conditioned on training data.)
@@ -144,6 +149,7 @@ class GaussianProcess(object):
         Args:
             x (np.array): array-like, shape (n, 1), floats.
             size (int): Optional, default 1. Number of samples.
+            return_std (bool): Optional, default False. Return std at each point.
             reg (float): Add `reg` amplitude white noise to diagonal of cov
                 before sampling to ensure it is positive-definite.
 
@@ -158,9 +164,10 @@ class GaussianProcess(object):
         posterior_mean, posterior_cov = self.posterior_moments(x)
         # add small amplitude noise to diagonal of cov before sampling
         cov = posterior_cov + reg * np.diag(np.random.randn(posterior_cov.shape[0]))
-        return self._sample(mean=posterior_mean.squeeze(),
-                            cov=cov,
-                            size=size)
+        samples = self._sample(mean=posterior_mean.squeeze(),
+                               cov=cov,
+                               size=size)
+        return (samples, np.sqrt(np.diag(cov))) if return_std else samples
 
     def predict(self, x, return_std=False):
         """
@@ -183,70 +190,3 @@ class GaussianProcess(object):
             raise ValueError('Need to fit the process to some training data first!')
         posterior_mean, posterior_cov = self.posterior_moments(x)
         return (posterior_mean, np.sqrt(np.diag(posterior_cov))) if return_std else posterior_mean
-
-
-# BE: This is currently super simple, but it would be good to add error bars, etc.
-class GPRPlotter(object):
-    """ Simple plotting methods for 1-d Gaussian Process Regression """
-    def __init__(self, process):
-        self.process = process
-
-    def __call__(self, plot, *args, **kwargs):
-        """
-        Just an accessor method really. self(`plot`, ***) just does
-        self.`plot`(***).
-
-        Args:
-            plot (string): name of the method you want to call.
-            *args: args for method.
-            **kwargs: kwargs for method.
-
-        Returns:
-            (fig, ax) # All plotting methods return this.
-
-        Raises:
-            AttributeError. When you ask for a plotting method that doesn't exist.
-        """
-        try:
-            plotter = getattr(self, plot)
-        except AttributeError:
-            raise AttributeError('No plotting method named {}.'.format(plot))
-        else:
-            return plotter(*args, **kwargs)
-
-    def prediction(self, grid, ax=None):
-        """
-        Plot prediction of process at `grid`, conditional on training data.
-
-        Args:
-            grid: Points on which to evaluate the process.
-            ax (matplotlib ax): Obvs.
-
-        Returns:
-
-        """
-        pass
-
-    def posterior(self, ax=None, n_samples=5):
-        """
-
-        Args:
-            ax:
-            n_samples:
-
-        Returns:
-
-        """
-        pass
-
-    def prior(self, ax=None, n_samples=5):
-        """
-
-        Args:
-            ax:
-            n_samples:
-
-        Returns:
-
-        """
-        pass
