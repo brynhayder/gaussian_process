@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 """
---------------------------------
-author: Bryn
-project: gaussian_processes
-created: 19/11/2017 20:19
----------------------------------
-
-
+Plotting functionality and helper class
 """
 import matplotlib.pyplot as plt
 from scipy.stats import norm
