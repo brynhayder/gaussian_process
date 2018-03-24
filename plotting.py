@@ -2,12 +2,14 @@
 """
 Plotting functionality and helper class
 """
+#TODO: Docstrings
+
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
 
 def kill_ticks(ax=None):
-    """Utility for removing axes markers"""
+    """remove all axes markers"""
     if ax is None:
         ax = plt.gca()
     ax.tick_params(axis='both',
@@ -25,7 +27,7 @@ def _check_ax(ax, shape=(1,)):
     return plt.subplots(*shape) if ax is None else (ax.figure, ax)
 
 
-def plot_samples(ax, x, samples, stds=None, confidence=0.95, mean=0., label='Sample'):
+def plot_samples(ax, x, samples, *, stds=None, confidence=0.95, mean=0., label='Sample'):
     """
 
     Args:
@@ -93,7 +95,7 @@ class GPRPlotter(object):
                    label='Training Data')
         return None
 
-    def prediction(self, x, confidence=0.95, ax=None, legend=True,
+    def prediction(self, x, *, confidence=0.95, ax=None, legend=True,
                    plot_training_data=True, rc_kwds={}):
         """
         Plot prediction of process at `grid`, conditional on training data.
@@ -129,8 +131,22 @@ class GPRPlotter(object):
                 ax.legend(bbox_to_anchor=(1, 1), loc='upper left')
             return fig, ax
 
-    def posterior(self, x, size=5, confidence=0.95, ax=None, legend=True,
+    def posterior(self, x, *, size=5, confidence=0.95, ax=None, legend=True,
                   plot_training_data=True, rc_kwds={}):
+        """
+
+        Args:
+            x:
+            size:
+            confidence:
+            ax:
+            legend:
+            plot_training_data:
+            rc_kwds:
+
+        Returns:
+
+        """
         with plt.rc_context(rc_kwds):
             samples, stds = self.process.sample_posterior(x, size=size, return_std=True)
             prediction = self.process.predict(x, return_std=False)
@@ -154,7 +170,20 @@ class GPRPlotter(object):
                 ax.legend(bbox_to_anchor=(1, 1), loc='upper left')
             return fig, ax
 
-    def prior(self, x, size=5, confidence=0.95, ax=None, legend=True, rc_kwds={}):
+    def prior(self, x, *, size=5, confidence=0.95, ax=None, legend=True, rc_kwds={}):
+        """
+
+        Args:
+            x:
+            size:
+            confidence:
+            ax:
+            legend:
+            rc_kwds:
+
+        Returns:
+
+        """
         with plt.rc_context(rc_kwds):
             samples, stds = self.process.sample_prior(x, size=size, return_std=True)
             fig, ax = _check_ax(ax)
