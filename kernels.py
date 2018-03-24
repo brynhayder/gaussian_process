@@ -8,14 +8,14 @@ Notes:
 ------
     - Some of these should just be functions, not classes. I made them all classes to unify the API.
 """
-import numpy as np
-
 __author__ = 'brynhayder'
 
 # TODO: Implement some kernel arithmetic
 # TODO: Make descriptor that is appropriate for updating params. Maybe simple property good enough.
 # TODO: Use hypothesis to write some tests for these
 # Note that some of these kernels only make sense for specific domains
+
+import numpy as np
 
 
 class KernelMixIn(object):

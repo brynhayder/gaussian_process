@@ -5,16 +5,16 @@ Only for educational purposes, use something like scikit-learn for production us
 
 Hopefully pretty obvious to see how everything works.
 """
-import numpy as np
-
-from plotting import GPRPlotter
-
 __author__ = 'brynhayder'
 __all__ = ['GaussianProcessRegressor']
 
 # TODO: Make LML function
 # TODO: Basic parameter optimisation
 # TODO: Write tests and examples
+
+import numpy as np
+
+from plotting import GPRPlotter
 
 
 def _zero_prior_mean(x):
